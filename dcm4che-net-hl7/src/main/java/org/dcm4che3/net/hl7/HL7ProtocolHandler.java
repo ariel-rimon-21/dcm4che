@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * @author Gunter Zeilinger <gunterze@gmail.com>
- *
  */
 enum HL7ProtocolHandler implements TCPProtocolHandler {
     INSTANCE;
@@ -90,15 +89,16 @@ enum HL7ProtocolHandler implements TCPProtocolHandler {
                     UnparsedHL7Message rsp;
                     try {
                         rsp = hl7dev.onMessage(conn, s, msg);
-                    if (monitor != null)
-                        monitor.onMessageProcessed(conn, s, msg, rsp, null);
+                        if (monitor != null)
+                            monitor.onMessageProcessed(conn, s, msg, rsp, null);
                     } catch (HL7Exception e) {
                         rsp = new UnparsedHL7Message(
                                 HL7Message.makeACK(msg.msh(), e).getBytes(null));
                         if (monitor != null)
                             monitor.onMessageProcessed(conn, s, msg, rsp, e);
                     }
-                    mllp.writeMessage(rsp.data());
+                    if (rsp.data() != null) mllp.writeMessage(rsp.data());
+
                 }
             } catch (IOException e) {
                 LOG.warn("Exception on accepted connection {}:", s, e);
