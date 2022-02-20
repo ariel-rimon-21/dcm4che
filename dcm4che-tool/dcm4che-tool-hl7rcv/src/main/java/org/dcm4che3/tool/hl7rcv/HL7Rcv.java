@@ -87,6 +87,7 @@ public class HL7Rcv {
     private String charset;
     private Templates tpls;
     private String[] xsltParams;
+    private Boolean shouldSendAck = true;
     private final HL7MessageListener handler = new HL7MessageListener() {
 
         @Override
@@ -143,6 +144,7 @@ public class HL7Rcv {
     @SuppressWarnings("static-access")
     public static void addOptions(Options opts) {
         opts.addOption(null, "ignore", false, rb.getString("ignore"));
+        opts.addOption("na", "no-ack", false, rb.getString("no ack"));
         opts.addOption(Option.builder()
                 .hasArg()
                 .argName("path")
@@ -197,7 +199,8 @@ public class HL7Rcv {
             System.err.println("hl7rcv: " + e.getMessage());
             System.err.println(rb.getString("try"));
             System.exit(2);
-        } catch (Exception e) {
+        }
+          catch (Exception e) {
             System.err.println("hl7rcv: " + e.getMessage());
             e.printStackTrace();
             System.exit(2);
@@ -206,6 +209,8 @@ public class HL7Rcv {
 
     private static void configure(HL7Rcv main, CommandLine cl)
             throws Exception {
+        if (cl.hasOption("no-ack"))
+            main.shouldSendAck = false;
         if (!cl.hasOption("ignore"))
             main.setStorageDirectory(
                     cl.getOptionValue("directory", "."));
@@ -239,9 +244,11 @@ public class HL7Rcv {
                 storeToFile(msg.data(), new File(
                             new File(storageDir, msg.msh().getMessageType()),
                                 msg.msh().getField(9, "_NULL_")));
+            if (shouldSendAck)
             return new UnparsedHL7Message(tpls == null
                 ? HL7Message.makeACK(msg.msh(), HL7Exception.AA, null).getBytes(null)
                 : xslt(msg));
+            else return new UnparsedHL7Message(null);
     }
 
     private void storeToFile(byte[] data, File f) throws IOException {
