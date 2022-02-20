@@ -282,3 +282,4 @@ public class HL7Rcv {
         return conn;
     }
 }
+
